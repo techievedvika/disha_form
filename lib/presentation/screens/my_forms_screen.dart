@@ -4,13 +4,15 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../service/api_service.dart';
 import 'form_builder_screen.dart';
 import 'form_filling_screen.dart';
+import '../../core/utils/form_frequency.dart';
+import '../../data/models/user_session_model.dart';
+import '../../service/session_service.dart';
 
 class MyFormsScreen extends StatefulWidget {
 
   final String userId;
 
   const MyFormsScreen({super.key, required this.userId});
-
   @override
   State<MyFormsScreen> createState() => _MyFormsScreenState();
 }
@@ -19,6 +21,7 @@ class _MyFormsScreenState extends State<MyFormsScreen> {
 
   List<dynamic> _data = [];
   bool _isLoading = false;
+  UserSession? _session;
 
   @override
   void initState() {
@@ -47,10 +50,15 @@ class _MyFormsScreenState extends State<MyFormsScreen> {
     });
     try {
       //final fetchedData = await ApiService.fetchData();
+      // final allForms = await ApiService.getAllForms(widget.userId);
+      // setState(() {
+      //   //_data = fetchedData;
+      //   _data = allForms ?? [];
+      // });
+      _session ??= await SessionService.load();
       final allForms = await ApiService.getAllForms(widget.userId);
       setState(() {
-        //_data = fetchedData;
-        _data = allForms ?? [];
+        _data = (allForms ?? []).where(_visible).toList();
       });
     } catch (e) {
       print('Error fetching data: $e');
@@ -60,6 +68,23 @@ class _MyFormsScreenState extends State<MyFormsScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  bool _visible(dynamic f) {
+    final s = _session;
+    if (s == null || s.role == UserRole.main) return true;
+    final raw = f['department_ids'];
+    if (raw is! List) return true; // backend not updated yet
+    return s.canSeeForm(raw.map((e) => e.toString()));
+  }
+
+  bool _isDone(dynamic f) => f['is_done'] == true || f['is_done'] == 1;
+
+  String _freqLabel(dynamic f) {
+    final fr = f['frequency'];
+    return FrequencyRule.fromJson(fr is Map ? Map<String, dynamic>.from(fr) : null)
+        .frequency
+        .label;
   }
 
   Future<void> _refreshData() async {

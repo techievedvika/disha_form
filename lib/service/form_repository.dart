@@ -102,7 +102,7 @@ class FormRepository {
   // }
 
   Future<String> saveForm(List<FormWidgetModel> widgets, String userId, String formName) async {
-    final url = Uri.parse(Api().formUploadApi);
+    final url = Api.formUploadApi;
     //final url = Uri.parse(Api.baseUrl + "dynamic_form_upload");
 
     final List<Map<String, dynamic>> widgetJson = widgets.map((widget) => widget.toJson()).toList();
@@ -118,7 +118,7 @@ class FormRepository {
 
     try {
       final response = await http.post(
-        url,
+        Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(payload), // Encode the entire payload map
       );
@@ -141,7 +141,7 @@ class FormRepository {
 
   /// Retrieves a form structure from the server by its ID.
   Future<List<FormWidgetModel>> getForm(String formId, String userId) async {
-    final url = Uri.parse(Api().getFormApi);
+    final url = Uri.parse(Api.getFormApi);
     const String testUserId = '123';
 
     // The payload needs to send the form_id to identify which form to get.
@@ -214,7 +214,7 @@ class FormRepository {
 
   Future<List<FormListItemModel>> getAllForms(String userId) async {
     // 1. Use the correct API endpoint
-    final url = Uri.parse(Api().getAllFormApi);
+    final url = Uri.parse(Api.getAllFormApi);
     final payload = {'user_id': userId};
 
     try {
